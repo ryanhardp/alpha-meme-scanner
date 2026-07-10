@@ -23,7 +23,7 @@ def get_and_score_coins():
         return []
 
     scored_coins = []
-    seen_addresses = set() # GUDANG PENYIMPANAN CA SEMENTARA (Anti-Duplikat)
+    seen_addresses = set()
 
     for pair in pairs:
         if pair.get('chainId') != 'solana':
@@ -38,12 +38,14 @@ def get_and_score_coins():
             target_token = base
             
         token_name = target_token.get('name', '')
-        if token_name.lower() == 'solana' or target_token.get('symbol') == 'SOL':
+        token_symbol = target_token.get('symbol', '').upper()
+        
+        # 1. BLACKLIST MUTLAK: Tendang semua Stablecoin dan Koin Major!
+        blacklist = ['SOL', 'WSOL', 'USDC', 'USDT', 'USDE']
+        if token_symbol in blacklist or token_name.lower() == 'solana':
             continue
 
         ca = target_token.get('address', '')
-        
-        # LOGIKA ANTI-DUPLIKAT: Kalau CA udah ada di list, skip aja!
         if ca in seen_addresses:
             continue
 
@@ -53,16 +55,16 @@ def get_and_score_coins():
         liquidity_usd = liquidity.get('usd', 0)
         fdv = pair.get('fdv', 0)
         
-        if liquidity_usd >= 100 and fdv >= 100:
+        # 2. FILTER 1000X ASLI: Maksimal Market Cap (FDV) cuma $1 Juta. USDC otomatis muntah!
+        if 100 <= liquidity_usd <= 50000 and 100 <= fdv <= 1000000:
             score = (liquidity_usd / fdv) * 100 
             scored_coins.append({
                 "name": token_name[:15],
-                "symbol": target_token.get('symbol', 'UNKNOWN')[:8],
+                "symbol": token_symbol[:8],
                 "contract_address": ca,
                 "score": round(score, 2),
                 "chain": "solana"
             })
-            # Masukin CA ke gudang catatan biar nggak kembar nanti
             seen_addresses.add(ca)
 
     scored_coins.sort(key=lambda x: x['score'], reverse=True)
@@ -75,7 +77,7 @@ def update_database(top_coins):
     try:
         supabase.table("top_coins").delete().gt("score", -1).execute()
         supabase.table("top_coins").insert(top_coins).execute()
-        print("[+] SUKSES UPDATE KE SUPABASE! ANTI DUPLIKAT BERHASIL!")
+        print("[+] SUKSES! Koin Micin Berhasil Didapat, Anti Stablecoin!")
     except Exception as e:
         print(f"[-] Error Supabase: {e}")
 
