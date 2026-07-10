@@ -1,0 +1,23 @@
+name: Alpha Meme Scanner
+on:
+  schedule:
+    - cron: '*/5 * * * *' # Otomatis jalan tiap 5 menit
+  workflow_dispatch: # Tombol manual di web GitHub
+
+jobs:
+  scan_and_update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Tarik Kode
+        uses: actions/checkout@v3
+      - name: Siapin Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install Library
+        run: pip install -r requirements.txt
+      - name: Jalankan Mesin
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python scanner.py
