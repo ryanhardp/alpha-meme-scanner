@@ -9,8 +9,8 @@ supabase: Client = create_client(url, key)
 def get_and_score_coins():
     print("[*] Mencari data koin terbaru...")
     
-    # 1. Ganti kata kunci! Kita nyari koin micin (misal keyword 'pump' yang lagi meta)
-    api_url = "https://api.dexscreener.com/latest/dex/search?q=pump"
+    # Kita balikin ke 'solana' biar tangkapannya buanyak banget
+    api_url = "https://api.dexscreener.com/latest/dex/search?q=solana"
     
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/125.0.0.0 Safari/537.36"
@@ -27,21 +27,21 @@ def get_and_score_coins():
 
     scored_coins = []
     for pair in pairs:
-        # 2. Pastikan cuma ngambil yang di jaringan Solana
         if pair.get('chainId') != 'solana':
             continue
 
-        base_token = pair.get('baseToken', {})
-        quote_token = pair.get('quoteToken', {})
+        base = pair.get('baseToken', {})
+        quote = pair.get('quoteToken', {})
         
-        # 3. Logika Pintar: Ambil koin yang BUKAN koin utama (SOL/USDC)
-        if base_token.get('symbol') in ['SOL', 'WSOL', 'USDC', 'USDT']:
-            target_token = quote_token
+        # Pisahin mana koin micinnya, mana SOL-nya
+        if base.get('symbol') in ['SOL', 'WSOL', 'USDC', 'USDT']:
+            target_token = quote
         else:
-            target_token = base_token
+            target_token = base
             
-        # 4. Anti-Scam: Buang kalau namanya masih 'Solana' murni
-        if target_token.get('name') == 'Solana' or target_token.get('symbol') == 'SOL':
+        # Tendang kalau namanya masih 'Solana' murni
+        token_name = target_token.get('name', '')
+        if token_name.lower() == 'solana' or target_token.get('symbol') == 'SOL':
             continue
 
         liquidity = pair.get('liquidity', {})
@@ -50,12 +50,12 @@ def get_and_score_coins():
         liquidity_usd = liquidity.get('usd', 0)
         fdv = pair.get('fdv', 0)
         
-        # Filter pengetesan
-        if liquidity_usd >= 1000 and fdv >= 1000:
+        # FILTER EKSTREM LONGGAR (Cuma butuh $100 biar layar web lu keisi dulu)
+        if liquidity_usd >= 100 and fdv >= 100:
             score = (liquidity_usd / fdv) * 100 
             scored_coins.append({
-                "name": target_token.get('name', 'Unknown'),
-                "symbol": target_token.get('symbol', 'UNKNOWN'),
+                "name": token_name[:15], # Batasi nama biar gak kepanjangan di web
+                "symbol": target_token.get('symbol', 'UNKNOWN')[:8],
                 "contract_address": target_token.get('address', ''),
                 "score": round(score, 2),
                 "chain": "solana"
