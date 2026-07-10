@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Top 5 Alpha Meme Coins</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-950 text-white font-sans min-h-screen flex flex-col items-center justify-center p-4">
+    
+    <div class="max-w-4xl w-full bg-gray-900 rounded-2xl shadow-2xl p-6 border border-gray-800">
+        <h1 class="text-3xl font-black text-center text-green-400 mb-2">🚀 TOP 5 MEME COINS POTENSI 1000X</h1>
+        <p class="text-gray-450 text-center text-sm mb-8">Data diperbarui otomatis oleh GitHub Actions setiap 5 minutes</p>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-gray-800 text-gray-400 uppercase text-xs tracking-wider">
+                        <th class="py-4 px-4">Nama Koin</th>
+                        <th class="py-4 px-4">Ticker</th>
+                        <th class="py-4 px-4">Smart Contract Address (CA)</th>
+                        <th class="py-4 px-4 text-right">Skor Potensi</th>
+                    </tr>
+                </thead>
+                <tbody id="coin-table-body">
+                    <tr>
+                        <td colspan="4" class="text-center py-8 text-gray-500 animate-pulse">
+                            Memuat data alpha dari Supabase...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // 1. PENGATURAN KUNCI SUPABASE LU
+        // Ganti URL ini dengan URL Supabase lu (yang tanpa /rest/v1/)
+        const SUPABASE_URL = "https://djkwlcuteabegjwkrbyf.supabase.co"; 
+        
+        // GANTI INI dengan "Publishable key" (Kunci yang paling atas di screenshot Supabase lu tadi, awalannya sb_publishable_...)
+        const SUPABASE_ANON_KEY = "sb_publishable_FXeaQYmJMSvmBSliVrWiRQ_G69cZWVi";
+
+        async function ambilDataKoin() {
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/top_coins?select=*&order=score.desc`, {
+                    method: "GET",
+                    headers: {
+                        "apikey": SUPABASE_ANON_KEY,
+                        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+                    }
+                });
+                const data = await response.json();
+                const tbody = document.getElementById("coin-table-body");
+                tbody.innerHTML = "";
+
+                if (data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-gray-400">Belum ada data koin. Tunggu mesin GitHub Actions berjalan pertama kali.</td></tr>`;
+                    return;
+                }
+
+                data.forEach(coin => {
+                    tbody.innerHTML += `
+                        <tr class="border-b border-gray-800 hover:bg-gray-850/50 transition">
+                            <td class="py-4 px-4 font-bold text-green-400">${coin.name}</td>
+                            <td class="py-4 px-4 text-gray-200">${coin.symbol}</td>
+                            <td class="py-4 px-4 text-xs font-mono text-gray-400 select-all bg-gray-950/40 rounded px-2 py-1">${coin.contract_address}</td>
+                            <td class="py-4 px-4 text-right font-black text-yellow-400 text-lg">${coin.score}</td>
+                        </tr>
+                    `;
+                });
+            } catch (error) {
+                console.error(error);
+                document.getElementById("coin-table-body").innerHTML = `<tr><td colspan="4" class="text-center py-8 text-red-400">Gagal memuat data. Periksa kembali konfigurasi API Key lu.</td></tr>`;
+            }
+        }
+
+        // Jalankan fungsi pas web dibuka
+        ambilDataKoin();
+    </script>
+</body>
+</html>
