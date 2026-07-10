@@ -21,9 +21,9 @@ def get_and_score_coins():
     for pair in pairs:
         liquidity = pair.get('liquidity', {}).get('usd', 0)
         fdv = pair.get('fdv', 0)
-
-        # Filter Koin: Likuiditas $5k-$50k dan Market Cap $10k-$100k
-        if 5000 <= liquidity <= 50000 and 10000 <= fdv <= 100000:
+        
+        # FILTER BARU: Diubah jadi lebih longgar biar koinnya pasti dapet buat ngetes web
+        if liquidity >= 1000 and fdv >= 1000:
             score = (liquidity / fdv) * 100 
             scored_coins.append({
                 "name": pair['baseToken']['name'],
